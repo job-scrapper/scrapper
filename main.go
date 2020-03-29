@@ -32,7 +32,7 @@ func main() {
 		if err != nil {
 			echo.NewHTTPError(http.StatusBadRequest, err.Error)
 		}
-		return c.JSON(http.StatusOK, response)
+		return c.JSON(http.StatusOK, &response)
 	})
 
 	e.Logger.Fatal(e.Start(":2222"))
