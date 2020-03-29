@@ -20,7 +20,9 @@ func main() {
 	})
 
 	e.GET("/alba", func(c echo.Context) error {
-		response, err := scrapper.GetAlbaPages()
+		job := c.QueryParam("job")
+		area := c.QueryParam("area")
+		response, err := scrapper.GetAlbaPages(job, area)
 		if err != nil {
 			echo.NewHTTPError(http.StatusBadRequest, err.Error)
 		}

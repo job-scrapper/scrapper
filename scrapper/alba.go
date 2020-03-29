@@ -1,9 +1,11 @@
 package scrapper
 
 import (
+	"fmt"
 	"net/http"
-	"strings"
+	"net/url"
 	"strconv"
+	"strings"
 
 	"github.com/PuerkitoBio/goquery"
 	"github.com/djimenez/iconv-go"
@@ -20,8 +22,10 @@ type Alba struct {
 }
 
 // GetAlbaPages scrap http://alba.co.kr search result
-func GetAlbaPages() ([]Alba, error) {
-	search := "/search/Search.asp?WsSrchWord=%C1%D6%B9%E6&wsSrchWordarea=%BC%AD%BF%EF&Section=0&Page=&hidschContainText=&hidWsearchInOut=&hidGroupKeyJobArea=&hidGroupKeyJobHotplace=&hidGroupKeyJobJobKind=&hidGroupKeyResumeArea=&hidGroupKeyResumeJobKind=&hidGroupKeyPay=&hidGroupKeyWorkWeek=&hidGroupKeyWorkPeriod=&hidGroupKeyOpt=&hidGroupKeyGender=&hidGroupKeyAge=&hidGroupKeyCareer=&hidGroupKeyLicense=&hidGroupKeyEduData=&hidGroupKeyWorkTime=&hidGroupKeyWorkState=&hidGroupKeyJobCareer=&hidSort=&hidSortOrder=1&hidSortDate=&hidSortCnt=&hidSortFilter=&hidArea=&area=&hidJobKind=&jobkind=&gendercd=C03&ageconst=G01&agelimitmin=&agelimitmax=&workperiod=&workweek="
+func GetAlbaPages(job string, area string) ([]Alba, error) {
+	jobQuery := url.QueryEscape(convertUTF8ToEUCKR(job))
+	areaQuery := url.QueryEscape(convertUTF8ToEUCKR(area))
+	search := fmt.Sprintf("/search/Search.asp?WsSrchWord=%s&wsSrchWordarea=%s&Section=0&Page=1&hidSort=FREEORDER&hidSortOrder=1&hidSortDate=rday0&hidSortCnt=50&gendercd=C03&ageconst=G01", jobQuery, areaQuery)
 	var result []Alba
 
 	res, err := http.Get(baseURL + search)
@@ -80,12 +84,16 @@ func getAlbaAddress(url string) (string, bool, error) {
 
 	if isExist {
 		return "http:" + link, true, nil
-	} else {
-		return convertEUCKRToUTF8(textTel), false, nil
 	}
+	return convertEUCKRToUTF8(textTel), false, nil
 }
 
 func convertEUCKRToUTF8(str string) string {
 	out, _ := iconv.ConvertString(str, "EUC-KR", "UTF-8")
+	return out
+}
+
+func convertUTF8ToEUCKR(str string) string {
+	out, _ := iconv.ConvertString(str, "UTF-8", "EUC-KR")
 	return out
 }
