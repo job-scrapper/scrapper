@@ -2,6 +2,7 @@ package main
 
 import (
 	"net/http"
+	"strconv"
 
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
@@ -22,7 +23,12 @@ func main() {
 	e.GET("/alba", func(c echo.Context) error {
 		job := c.QueryParam("job")
 		area := c.QueryParam("area")
-		response, err := scrapper.GetAlbaPages(job, area)
+		volume, err :=  strconv.Atoi(c.QueryParam("volume"))
+		if err != nil {
+			echo.NewHTTPError(http.StatusBadRequest, err.Error)
+		}
+
+		response, err := scrapper.GetAlbaPages(job, area, volume)
 		if err != nil {
 			echo.NewHTTPError(http.StatusBadRequest, err.Error)
 		}

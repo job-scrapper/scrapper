@@ -22,10 +22,10 @@ type Alba struct {
 }
 
 // GetAlbaPages scrap http://alba.co.kr search result
-func GetAlbaPages(job string, area string) ([]Alba, error) {
+func GetAlbaPages(job string, area string, volume int) ([]Alba, error) {
 	jobQuery := url.QueryEscape(convertUTF8ToEUCKR(job))
 	areaQuery := url.QueryEscape(convertUTF8ToEUCKR(area))
-	search := fmt.Sprintf("/search/Search.asp?WsSrchWord=%s&wsSrchWordarea=%s&Section=0&Page=1&hidSort=FREEORDER&hidSortOrder=1&hidSortDate=rday0&hidSortCnt=50&gendercd=C03&ageconst=G01", jobQuery, areaQuery)
+	search := fmt.Sprintf("/search/Search.asp?WsSrchWord=%s&wsSrchWordarea=%s&Section=0&Page=1&hidSort=FREEORDER&hidSortOrder=1&hidSortDate=rday0&hidSortCnt=%d&gendercd=C03&ageconst=G01", jobQuery, areaQuery, volume)
 	var result []Alba
 
 	res, err := http.Get(baseURL + search)
@@ -38,6 +38,19 @@ func GetAlbaPages(job string, area string) ([]Alba, error) {
 	if err != nil {
 		return nil, err
 	}
+
+	totalItemText := doc.Find("#SearchJob>h2>em").Text()
+	totalItemInt, err :=  strconv.Atoi(strings.Replace(totalItemText, ",", "", -1))
+	if err != nil {
+		return nil, err
+	}
+
+	totalPages := totalItemInt / volume
+	if totalItemInt % volume > 0 {
+		totalPages++
+	}
+
+	fmt.Println(totalPages)
 
 	jobResult := doc.Find("#jobNormal")
 	jobResult.Find("li").Each(func(i int, li *goquery.Selection) {
