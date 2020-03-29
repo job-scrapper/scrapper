@@ -1,0 +1,57 @@
+---
+  - hosts: somethingmore
+    vars_prompt:
+      - name: git_branch
+        prompt: Please type git branch
+        private: no
+    tasks:
+      - name: test connection
+        ping:
+      - name: git checkout
+        git:
+          repo: git@github.com:job-scrapper/scrapper.git
+          dest: /home/some/job-scrapper/scrapper
+          version: '{{ git_branch }}'
+        register: output_commits
+      - name: Display commit info
+        debug:
+          var: output_commits
+      - name: build new image
+        become: true
+        docker_image:
+          name: scrapper-go
+          tag: '{{ output_commits.after[:7] }}'
+          build:
+            path: /home/some/job-scrapper/scrapper
+          source: build
+      - name: Remove old container
+        become: true
+        ignore_errors: yes
+        docker_container:
+          name: '{{ output_commits.before[:7] }}'
+          state: absent
+      - name: Run new container
+        become: true
+        docker_container:
+          name: '{{ output_commits.after[:7] }}'
+          image: 'scrapper-go:{{ output_commits.after[:7] }}'
+          ports: '2222:2222'
+      - name: Restart nginx
+        become: true
+        service:
+          name: nginx
+          state: restarted
+      - name: Remove old image
+        become: true
+        ignore_errors: yes
+        docker_image:
+          name: scrapper-go
+          tag: '{{ output_commits.before[:7] }}'
+          state: absent
+      - name: prune dangling images
+        become: true
+        docker_prune:
+          images: yes
+          images_filters:
+            dangling: true
+  

@@ -1,11 +1,7 @@
 ############################
 # STEP 1 build executable binary
 ############################
-FROM golang:1.13 AS builder
-
-# Install git.
-# Git is required for fetching the dependencies.
-# RUN apk update && apk add --no-cache git make build-base
+FROM golang:1.13
 
 WORKDIR /build
 
@@ -19,16 +15,5 @@ RUN go install github.com/djimenez/iconv-go
 # Build the binary.
 RUN go build -o ./main
 
-# EXPOSE 2222
-# CMD ["/build/main"]
-
-############################
-# STEP 2 build a small image
-############################
-FROM scratch
-
-# # Copy our static executable.
-COPY --from=builder /build/main /
-# # Run the binary.
 EXPOSE 2222
-CMD ["/main"]
+CMD ["/build/main"]
